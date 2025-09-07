@@ -1,0 +1,6 @@
+[package]
+name = "CS8803-Dynamic-Algebraic-Algorithms-Implementation"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
