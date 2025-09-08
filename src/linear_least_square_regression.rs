@@ -1,4 +1,5 @@
 use crate::matrix;
+use crate::vector;
 
 #[allow(non_snake_case)]
 // Given a nxd matrix A, and a n sized vector b where n >= d.
@@ -7,43 +8,50 @@ use crate::matrix;
 // It is the responsibility of the user to maintain invertibility of A.
 pub struct LinearLeastSquareRegressionSolver {
     pub A: matrix::Matrix<f64>,
-    pub b: matrix::Matrix<f64>, // TODO: Replace with vector when implmentation is ready.
+    pub b: vector::Vector<f64>,
     pub n: usize,
     pub d: usize,
-    ATb: matrix::Matrix<f64>, // TODO: Replace with vector when implementation is ready.
+    ATb: vector::Vector<f64>,
     ATAi: matrix::Matrix<f64>,
 }
 
 #[allow(non_snake_case)]
 impl LinearLeastSquareRegressionSolver {
-    pub fn init(A: matrix::Matrix<f64>, b: matrix::Matrix<f64>) -> Self {
+    pub fn init(A: matrix::Matrix<f64>, b: vector::Vector<f64>) -> Result<Self, ()> {
         assert!(
             A.num_rows == b.num_rows,
             "Number of rows don't match. A = {:?}, b = {:?}",
             A,
             b
         );
-        assert!(b.num_cols == 1, "b is not a vector. b = {:?}", b);
         let n = A.num_rows;
         let d = A.num_cols;
 
-        let ATAi = (A.transpose() * A.clone()).inverse();
+        let ATA = A.transpose() * A.clone();
+        if ATA.det() == 0_f64 {
+            return Err(());
+        }
+
+        let ATAi = ATA.inverse();
+        // The operation Matrix * Vector is now defined to return a Vector
         let ATb = A.transpose() * b.clone();
 
-        LinearLeastSquareRegressionSolver {
+        Ok(LinearLeastSquareRegressionSolver {
             A,
             b,
             n,
             d,
             ATb,
             ATAi,
-        }
+        })
     }
-    // Add a row of size d and remove the corresponding element in b.
-    // Its the responsibility of the user to maintain invertibility of A.
-    pub fn add(&mut self, alpha: matrix::Matrix<f64>, beta: f64) -> Result<(), ()> {
-        assert!(alpha.num_cols == self.d);
-        assert!(alpha.num_rows == 1);
+
+    // Add a row of size d to the system.
+    pub fn add(&mut self, alpha: vector::Vector<f64>, beta: f64) -> Result<(), ()> {
+        assert!(
+            alpha.num_rows == self.d,
+            "Alpha vector has incorrect dimensions."
+        );
 
         let den: f64 = 1_f64 + (alpha.transpose() * self.ATAi.clone() * alpha.clone()).to_element();
 
@@ -54,17 +62,18 @@ impl LinearLeastSquareRegressionSolver {
                 - (self.ATAi.clone() * alpha.clone())
                     * (alpha.transpose() * self.ATAi.clone())
                     * (1_f64 / den);
+
             self.ATb = self.ATb.clone() + alpha * beta;
             Ok(())
         }
     }
 
-    // Remove a row of size d and remove the corresponding element in b.
-    // Its the responsibility of the user to remove an row that actually exists.
-    // Expect garbage if youre removing something that doesnt exist.
-    pub fn remove(&mut self, alpha: matrix::Matrix<f64>, beta: f64) -> Result<(), ()> {
-        assert!(alpha.num_cols == self.d);
-        assert!(alpha.num_rows == 1);
+    // Remove a row of size d from the system.
+    pub fn remove(&mut self, alpha: vector::Vector<f64>, beta: f64) -> Result<(), ()> {
+        assert!(
+            alpha.num_rows == self.d,
+            "Alpha vector has incorrect dimensions."
+        );
 
         let den: f64 = 1_f64 - (alpha.transpose() * self.ATAi.clone() * alpha.clone()).to_element();
 
@@ -75,12 +84,13 @@ impl LinearLeastSquareRegressionSolver {
                 + (self.ATAi.clone() * alpha.clone())
                     * (alpha.transpose() * self.ATAi.clone())
                     * (1_f64 / den);
+
             self.ATb = self.ATb.clone() - alpha * beta;
             Ok(())
         }
     }
 
-    pub fn solve(&self) -> matrix::Matrix<f64> {
+    pub fn solve(&self) -> vector::Vector<f64> {
         self.ATAi.clone() * self.ATb.clone()
     }
 }

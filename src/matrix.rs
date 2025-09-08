@@ -688,7 +688,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Matrix is not invertible (singular).")]
+    #[should_panic(expected = "The determinant of the matrix is zero.")]
     fn test_inverse_of_singular_matrix() {
         // This matrix has a determinant of 0
         let matrix = Matrix::new(
