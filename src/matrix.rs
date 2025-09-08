@@ -468,10 +468,10 @@ impl Mul<Matrix<f64>> for f64 {
 mod tests {
     use super::*;
 
-    // Custom epsilon-based equality for f32
-    const EPSILON: f32 = 1e-6;
+    // Custom epsilon-based equality for f64
+    const EPSILON: f64 = 1e-6;
 
-    fn assert_approx_eq(actual: f32, expected: f32) {
+    fn assert_approx_eq(actual: f64, expected: f64) {
         assert!(
             (actual - expected).abs() < EPSILON,
             "assertion failed: `(left == right)`\n  left: `{}`\n right: `{}`\n epsilon: `{}`",
@@ -574,19 +574,19 @@ mod tests {
 
     #[test]
     fn test_determinant_identity() {
-        let identity_3 = Matrix::<f32>::identity(3);
+        let identity_3 = Matrix::<f64>::identity(3);
         assert_approx_eq(identity_3.det(), 1.0);
 
-        let identity_5 = Matrix::<f32>::identity(5);
+        let identity_5 = Matrix::<f64>::identity(5);
         assert_approx_eq(identity_5.det(), 1.0);
     }
 
     #[test]
     fn test_determinant_zero_matrix() {
-        let zero_3 = Matrix::<f32>::zero(3, 3);
+        let zero_3 = Matrix::<f64>::zero(3, 3);
         assert_approx_eq(zero_3.det(), 0.0);
 
-        let zero_4 = Matrix::<f32>::zero(4, 4);
+        let zero_4 = Matrix::<f64>::zero(4, 4);
         assert_approx_eq(zero_4.det(), 0.0);
     }
 
@@ -628,7 +628,7 @@ mod tests {
     }
 
     // Helper function to compare two matrices for approximate equality
-    fn assert_matrix_approx_eq(actual: &Matrix<f32>, expected: &Matrix<f32>) {
+    fn assert_matrix_approx_eq(actual: &Matrix<f64>, expected: &Matrix<f64>) {
         assert_eq!(
             actual.num_rows, expected.num_rows,
             "Matrix row counts differ"
@@ -717,7 +717,7 @@ mod tests {
         );
         let inverse_matrix = matrix.clone().inverse();
         let result = matrix * inverse_matrix;
-        let identity = Matrix::<f32>::identity(3);
+        let identity = Matrix::<f64>::identity(3);
 
         // Check if M * M⁻¹ ≈ I
         assert_matrix_approx_eq(&result, &identity);
