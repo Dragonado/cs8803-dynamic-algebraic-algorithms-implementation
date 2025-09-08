@@ -28,24 +28,9 @@ pub trait MatrixElement:
 pub trait Identity {
     fn identity() -> Self;
 }
-
-impl Identity for f64 {
-    fn identity() -> Self {
-        1_f64
-    }
-}
 pub trait Zero {
     fn zero() -> Self;
 }
-
-impl Zero for f64 {
-    fn zero() -> Self {
-        0_f64
-    }
-}
-
-// Implement MatrixElement for supported types
-impl MatrixElement for f64 {}
 
 #[derive(Debug, Clone)]
 pub struct Matrix<T> {
@@ -58,6 +43,7 @@ impl<T> Matrix<T>
 where
     T: MatrixElement,
 {
+    // Zero matrix. Only defined for square matrices.
     pub fn zero(num_rows: usize, num_cols: usize) -> Self {
         Matrix {
             mat: vec![vec![T::zero(); num_cols]; num_rows],
@@ -66,7 +52,7 @@ where
         }
     }
 
-    // Only defined for square matrices.
+    // Identity matrix. Only defined for square matrices.
     pub fn identity(size: usize) -> Self {
         let mut mat = vec![vec![T::zero(); size]; size];
         for i in 0..size {
@@ -196,8 +182,6 @@ where
         self.gaussian_elimination_det()
     }
 
-    // Place this inside the impl<T> Matrix<T> block
-
     /// Calculates the inverse of a square matrix using Gauss-Jordan elimination.
     ///
     /// The time complexity of this method is O(n³).
@@ -283,7 +267,7 @@ where
 
         inv
     }
-    // Takes O(logn) time using recursive binary exponentiation.
+    // Performs O(logn) multiplication operations using recursive binary exponentiation.
     pub fn pow(&self, n: i32) -> Self {
         assert!(
             self.num_rows == self.num_cols,
@@ -324,12 +308,14 @@ where
         }
     }
 
+    // Converts to T if Matrix is 1x1
     pub fn to_element(&self) -> T {
         assert!(self.num_cols == self.num_rows && self.num_rows == 1);
         self.mat[0][0]
     }
 }
 
+// Matrix + Matrix
 impl<T> Add for Matrix<T>
 where
     T: MatrixElement,
@@ -355,6 +341,7 @@ where
     }
 }
 
+// Matrix - Matrix
 impl<T> Sub for Matrix<T>
 where
     T: MatrixElement,
@@ -380,6 +367,7 @@ where
     }
 }
 
+// Matrix * Matrix
 impl<T> Mul for Matrix<T>
 where
     T: MatrixElement,
@@ -407,6 +395,7 @@ where
     }
 }
 
+// Matrix == Matrix
 impl<T> PartialEq for Matrix<T>
 where
     T: MatrixElement,
@@ -429,8 +418,7 @@ where
         true
     }
 }
-
-// Implement `Matrix * Scalar` using references to avoid consuming the matrix.
+// Matrix * scalar
 impl<T> Mul<T> for Matrix<T>
 where
     T: Mul<Output = T> + Copy,
@@ -448,8 +436,22 @@ where
     }
 }
 
-// Case 2: Scalar * Matrix (requires per-type implementations)
-// Explicit implementation for f64 on the left
+// f64 specific implementation.
+impl MatrixElement for f64 {}
+
+impl Identity for f64 {
+    fn identity() -> Self {
+        1_f64
+    }
+}
+
+impl Zero for f64 {
+    fn zero() -> Self {
+        0_f64
+    }
+}
+
+// f64 * Matrix -- because generic implementation is not possible.
 impl Mul<Matrix<f64>> for f64 {
     type Output = Matrix<f64>;
 

@@ -9,6 +9,7 @@ use std::ops::Sub;
 #[derive(Debug, Clone)]
 pub struct Vector<T: MatrixElement>(pub Matrix<T>); // The Vector is a wrapper around a Matrix
 
+// fallback to Matrix implementation if not defined in Vector.
 impl<T: MatrixElement> Deref for Vector<T> {
     type Target = Matrix<T>;
 
@@ -18,6 +19,7 @@ impl<T: MatrixElement> Deref for Vector<T> {
     }
 }
 
+// Define generic Vector implementations.
 impl<T: MatrixElement> Vector<T> {
     /// Creates a new column vector from a flat list of elements.
     /// This constructor ensures the underlying matrix is always n x 1.
@@ -46,20 +48,17 @@ impl<T: MatrixElement> Vector<T> {
     }
 }
 
+// Matrix * Vector  -- returns a vector
 impl<T: crate::matrix::MatrixElement> Mul<Vector<T>> for Matrix<T> {
     type Output = Vector<T>;
-
-    /// Defines Matrix * Vector multiplication.
     fn mul(self, rhs: Vector<T>) -> Self::Output {
         // Reuse the existing Matrix * Matrix multiplication on the vector's inner matrix (rhs.0)
         let result_matrix = self * rhs.0;
-
-        // The result of multiplying an m x d matrix by a d x 1 vector
-        // is an m x 1 matrix (a vector). We wrap it for type safety.
         Vector(result_matrix)
     }
 }
 
+// Vector * Matrix  -- returns a matrix
 impl<T: crate::matrix::MatrixElement> Mul<Matrix<T>> for Vector<T> {
     type Output = Matrix<T>;
 
@@ -77,8 +76,7 @@ impl<T: crate::matrix::MatrixElement> Mul<Matrix<T>> for Vector<T> {
     }
 }
 
-/// Implements a fallible conversion from a Matrix to a Vector.
-/// This will only succeed if the matrix has exactly one column.
+// Convert Matrix into Vector
 impl<T: MatrixElement> TryFrom<Matrix<T>> for Vector<T> {
     // We'll use a String for a descriptive error message.
     type Error = String;
@@ -98,7 +96,7 @@ impl<T: MatrixElement> TryFrom<Matrix<T>> for Vector<T> {
     }
 }
 
-// --- Vector + Vector ---
+// Vector + Vector
 impl<T: MatrixElement> Add<Vector<T>> for Vector<T> {
     type Output = Vector<T>;
 
@@ -116,7 +114,7 @@ impl<T: MatrixElement> Add<Vector<T>> for Vector<T> {
     }
 }
 
-// --- Vector - Vector ---
+// Vector - Vector
 impl<T: MatrixElement> Sub<Vector<T>> for Vector<T> {
     type Output = Vector<T>;
 
@@ -134,6 +132,7 @@ impl<T: MatrixElement> Sub<Vector<T>> for Vector<T> {
     }
 }
 
+// Vector * scalar
 impl<T: crate::matrix::MatrixElement> Mul<T> for Vector<T> {
     type Output = Vector<T>;
 
@@ -146,19 +145,20 @@ impl<T: crate::matrix::MatrixElement> Mul<T> for Vector<T> {
     }
 }
 
-impl Vector<f64> {
-    /// Calculates the L2 norm (Euclidean length) of the vector.
-    pub fn l2_norm(&self) -> f64 {
-        self.dot(&self).sqrt()
-    }
-}
-
-// This implementation handles the case: constant * Vector
+// f64 * Vector -- because generic implementation not possible.
 impl Mul<Vector<f64>> for f64 {
     type Output = Vector<f64>;
 
     fn mul(self, rhs: Vector<f64>) -> Self::Output {
         // Reuse the logic from the Vector * f64 implementation
         rhs * self
+    }
+}
+
+// L2 norm of a f64 Vector.
+impl Vector<f64> {
+    /// Calculates the L2 norm (Euclidean length) of the vector.
+    pub fn l2_norm(&self) -> f64 {
+        self.dot(&self).sqrt()
     }
 }
