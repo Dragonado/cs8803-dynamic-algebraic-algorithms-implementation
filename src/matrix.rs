@@ -29,23 +29,23 @@ pub trait Identity {
     fn identity() -> Self;
 }
 
-impl Identity for f32 {
+impl Identity for f64 {
     fn identity() -> Self {
-        1_f32
+        1_f64
     }
 }
 pub trait Zero {
     fn zero() -> Self;
 }
 
-impl Zero for f32 {
+impl Zero for f64 {
     fn zero() -> Self {
-        0_f32
+        0_f64
     }
 }
 
 // Implement MatrixElement for supported types
-impl MatrixElement for f32 {}
+impl MatrixElement for f64 {}
 
 #[derive(Debug, Clone)]
 pub struct Matrix<T> {
@@ -323,6 +323,11 @@ where
             num_cols: self.num_rows,
         }
     }
+
+    pub fn to_element(&self) -> T {
+        assert!(self.num_cols == self.num_rows && self.num_rows == 1);
+        self.mat[0][0]
+    }
 }
 
 impl<T> Add for Matrix<T>
@@ -344,6 +349,31 @@ where
         for i in 0..self.num_rows {
             for j in 0..self.num_cols {
                 result.mat[i][j] = self.mat[i][j].clone() + rhs.mat[i][j].clone();
+            }
+        }
+        result
+    }
+}
+
+impl<T> Sub for Matrix<T>
+where
+    T: MatrixElement,
+{
+    type Output = Matrix<T>;
+
+    fn sub(self, rhs: Matrix<T>) -> Self::Output {
+        assert!(
+            self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols,
+            "Matrices have different number of shape. LHS Matrix = {:?}, RHS matrix = {:?}.",
+            self,
+            rhs
+        );
+
+        let mut result = Matrix::<T>::zero(self.num_rows, self.num_cols);
+
+        for i in 0..self.num_rows {
+            for j in 0..self.num_cols {
+                result.mat[i][j] = self.mat[i][j].clone() - rhs.mat[i][j].clone();
             }
         }
         result
@@ -397,6 +427,40 @@ where
             }
         }
         true
+    }
+}
+
+// Implement `Matrix * Scalar` using references to avoid consuming the matrix.
+impl<T> Mul<T> for Matrix<T>
+where
+    T: Mul<Output = T> + Copy,
+{
+    type Output = Matrix<T>;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        let mut result = self.clone();
+        for i in 0..self.num_rows {
+            for j in 0..self.num_cols {
+                result.mat[i][j] = result.mat[i][j] * rhs;
+            }
+        }
+        result
+    }
+}
+
+// Case 2: Scalar * Matrix (requires per-type implementations)
+// Explicit implementation for f64 on the left
+impl Mul<Matrix<f64>> for f64 {
+    type Output = Matrix<f64>;
+
+    fn mul(self, rhs: Matrix<f64>) -> Self::Output {
+        let mut result = rhs.clone();
+        for i in 0..rhs.num_rows {
+            for j in 0..rhs.num_cols {
+                result.mat[i][j] = result.mat[i][j] * self;
+            }
+        }
+        result
     }
 }
 
@@ -624,7 +688,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "The determinant of the matrix is zero.")]
+    #[should_panic(expected = "Matrix is not invertible (singular).")]
     fn test_inverse_of_singular_matrix() {
         // This matrix has a determinant of 0
         let matrix = Matrix::new(
