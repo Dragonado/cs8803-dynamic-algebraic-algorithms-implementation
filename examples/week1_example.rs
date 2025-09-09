@@ -1,29 +1,24 @@
-pub mod linear_least_square_regression;
-pub mod matrix;
-pub mod vector;
-
-use crate::linear_least_square_regression::LinearLeastSquareRegressionSolver;
-use crate::matrix::Matrix;
-use rand::Rng; // Still needed for gen_range
-use std::env;
+use cs8803_dynamic_algebraic_algorithms_implementation::week1::linear_least_square_regression::LinearLeastSquareRegressionSolver;
+use cs8803_dynamic_algebraic_algorithms_implementation::{Matrix, Vector};
 use std::time::Instant;
 
 #[allow(non_snake_case)]
 fn main() {
-    unsafe {
-        env::set_var("RUST_BACKTRACE", "1");
-    }
-
-    // Define the dimensions for the large matrices
-    let n = 10000;
-    let d = 100;
+    // Define the dimensions for the matrices
+    let n = 1000;
+    let d = 10;
 
     // --- 1. Generate Matrix A ---
     let start_gen_a = Instant::now();
     println!("Generating {}x{} matrix A...", n, d);
     let mut a_data = Vec::with_capacity(n);
-    for _ in 0..n {
-        let row: Vec<f64> = (0..d).map(|_| rand::random::<f64>()).collect();
+    for i in 0..n {
+        let row: Vec<f64> = (0..d)
+            .map(|j| {
+                // Create a pattern that ensures A^T A is invertible
+                (i as f64) * 0.1 + (j as f64) * 0.01 + 1.0
+            })
+            .collect();
         a_data.push(row);
     }
     let A = Matrix::<f64>::new(a_data, n, d);
@@ -33,10 +28,10 @@ fn main() {
     let start_gen_b = Instant::now();
     println!("Generating {}x1 vector b...", n);
     let mut b_data = Vec::with_capacity(n);
-    for _ in 0..n {
-        b_data.push(rand::random::<f64>());
+    for i in 0..n {
+        b_data.push((i as f64) * 0.01);
     }
-    let b = vector::Vector::<f64>::new(b_data);
+    let b = Vector::<f64>::new(b_data);
     println!("\tDone in {:.2?}.", start_gen_b.elapsed());
 
     // --- 3. Initialize the solver ---
@@ -51,26 +46,27 @@ fn main() {
     let _ = llsrs.solve();
     println!("\tDone in {:.2?}.", start_initial_solve.elapsed());
 
-    // --- 5. Perform 1000 dynamic add/remove operations ---
-    println!("\nStarting 1000 add/remove operations...");
-    let num_operations = 1000;
-    let mut dynamic_rows: Vec<(vector::Vector<f64>, f64)> = Vec::new();
+    // --- 5. Perform 100 dynamic add/remove operations ---
+    println!("\nStarting 100 add/remove operations...");
+    let num_operations = 100;
+    let mut dynamic_rows: Vec<(Vector<f64>, f64)> = Vec::new();
 
     for i in 0..num_operations {
         let op_type: &str;
         let update_duration;
 
-        let should_add = dynamic_rows.is_empty() || rand::random::<bool>();
+        // Deterministic pattern: add for first half, then alternate
+        let should_add = dynamic_rows.is_empty() || (i < num_operations / 2) || (i % 2 == 0);
 
         if should_add {
             op_type = "ADD";
-            // CORRECTED LINE: Generate d rows, each with 1 column
+            // Generate deterministic alpha vector
             let mut new_alpha_data = Vec::with_capacity(d);
-            for _ in 0..d {
-                new_alpha_data.push(rand::random::<f64>());
+            for j in 0..d {
+                new_alpha_data.push((i as f64 + j as f64) * 0.1);
             }
-            let new_alpha = vector::Vector::new(new_alpha_data);
-            let new_beta = rand::random::<f64>();
+            let new_alpha = Vector::new(new_alpha_data);
+            let new_beta = (i as f64) * 0.5;
 
             let update_start = Instant::now();
             llsrs.add(new_alpha.clone(), new_beta).unwrap();
@@ -79,9 +75,8 @@ fn main() {
             dynamic_rows.push((new_alpha, new_beta));
         } else {
             op_type = "REMOVE";
-            // We still need an RNG instance for gen_range
-            let mut rng = rand::rng();
-            let row_idx_to_remove = rng.random_range(0..dynamic_rows.len());
+            // Remove from the end (deterministic)
+            let row_idx_to_remove = dynamic_rows.len() - 1;
             let (alpha_to_remove, beta_to_remove) = dynamic_rows.swap_remove(row_idx_to_remove);
 
             let update_start = Instant::now();

@@ -3,7 +3,7 @@ use crate::vector;
 
 #[allow(non_snake_case)]
 // Given a nxd matrix A, and a n sized vector b where n >= d.
-// Return a d sized vector x such Ax - b is minimised.
+// Return a d sized vector x such that L2 norm of (Ax - b) is minimised.
 // You can add and remove rows from A and b.
 // It is the responsibility of the user to maintain invertibility of A.
 pub struct LinearLeastSquareRegressionSolver {
@@ -27,14 +27,13 @@ impl LinearLeastSquareRegressionSolver {
         let n = A.num_rows;
         let d = A.num_cols;
 
-        let ATA = A.transpose() * A.clone();
+        let ATA = A.transpose() * &A;
         if ATA.det() == 0_f64 {
             return Err(());
         }
 
         let ATAi = ATA.inverse();
-        // The operation Matrix * Vector is now defined to return a Vector
-        let ATb = A.transpose() * b.clone();
+        let ATb = A.transpose() * &b;
 
         Ok(LinearLeastSquareRegressionSolver {
             A,
@@ -53,17 +52,15 @@ impl LinearLeastSquareRegressionSolver {
             "Alpha vector has incorrect dimensions."
         );
 
-        let den: f64 = 1_f64 + (alpha.transpose() * self.ATAi.clone() * alpha.clone()).to_element();
+        let den: f64 = 1_f64 + (alpha.transpose() * &self.ATAi * &alpha).to_element();
 
         if den == 0.0 {
             Err(())
         } else {
-            self.ATAi = self.ATAi.clone()
-                - (self.ATAi.clone() * alpha.clone())
-                    * (alpha.transpose() * self.ATAi.clone())
-                    * (1_f64 / den);
+            self.ATAi = &self.ATAi
+                - (&self.ATAi * &alpha) * (alpha.transpose() * &self.ATAi) * (1_f64 / den);
 
-            self.ATb = self.ATb.clone() + alpha * beta;
+            self.ATb = &self.ATb + alpha * beta;
             Ok(())
         }
     }
@@ -75,22 +72,20 @@ impl LinearLeastSquareRegressionSolver {
             "Alpha vector has incorrect dimensions."
         );
 
-        let den: f64 = 1_f64 - (alpha.transpose() * self.ATAi.clone() * alpha.clone()).to_element();
+        let den: f64 = 1_f64 - (alpha.transpose() * &self.ATAi * &alpha).to_element();
 
         if den == 0.0 {
             Err(())
         } else {
-            self.ATAi = self.ATAi.clone()
-                + (self.ATAi.clone() * alpha.clone())
-                    * (alpha.transpose() * self.ATAi.clone())
-                    * (1_f64 / den);
+            self.ATAi = &self.ATAi
+                + (&self.ATAi * &alpha) * (alpha.transpose() * &self.ATAi) * (1_f64 / den);
 
-            self.ATb = self.ATb.clone() - alpha * beta;
+            self.ATb = &self.ATb - alpha * beta;
             Ok(())
         }
     }
 
     pub fn solve(&self) -> vector::Vector<f64> {
-        self.ATAi.clone() * self.ATb.clone()
+        &self.ATAi * &self.ATb
     }
 }

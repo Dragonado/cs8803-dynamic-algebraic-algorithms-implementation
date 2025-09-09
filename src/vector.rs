@@ -58,6 +58,26 @@ impl<T: crate::matrix::MatrixElement> Mul<Vector<T>> for Matrix<T> {
     }
 }
 
+// &Matrix * &Vector  -- returns a vector
+impl<T: crate::matrix::MatrixElement> Mul<&Vector<T>> for &Matrix<T> {
+    type Output = Vector<T>;
+    fn mul(self, rhs: &Vector<T>) -> Self::Output {
+        // Reuse the existing Matrix * Matrix multiplication on the vector's inner matrix (rhs.0)
+        let result_matrix = self * &rhs.0;
+        Vector(result_matrix)
+    }
+}
+
+// Matrix * &Vector  -- returns a vector
+impl<T: crate::matrix::MatrixElement> Mul<&Vector<T>> for Matrix<T> {
+    type Output = Vector<T>;
+    fn mul(self, rhs: &Vector<T>) -> Self::Output {
+        // Reuse the existing Matrix * Matrix multiplication on the vector's inner matrix (rhs.0)
+        let result_matrix = self * &rhs.0;
+        Vector(result_matrix)
+    }
+}
+
 // Vector * Matrix  -- returns a matrix
 impl<T: crate::matrix::MatrixElement> Mul<Matrix<T>> for Vector<T> {
     type Output = Matrix<T>;
@@ -129,6 +149,58 @@ impl<T: MatrixElement> Sub<Vector<T>> for Vector<T> {
 
         // Reuse the existing Matrix - Matrix subtraction on the inner matrices.
         Vector(self.0 - rhs.0)
+    }
+}
+
+// &Vector + &Vector
+impl<T: MatrixElement> Add<&Vector<T>> for &Vector<T> {
+    type Output = Vector<T>;
+
+    fn add(self, rhs: &Vector<T>) -> Self::Output {
+        assert_eq!(
+            self.num_rows, rhs.num_rows,
+            "Vectors must have the same length for addition."
+        );
+        Vector(&self.0 + &rhs.0)
+    }
+}
+
+// &Vector - &Vector
+impl<T: MatrixElement> Sub<&Vector<T>> for &Vector<T> {
+    type Output = Vector<T>;
+
+    fn sub(self, rhs: &Vector<T>) -> Self::Output {
+        assert_eq!(
+            self.num_rows, rhs.num_rows,
+            "Vectors must have the same length for subtraction."
+        );
+        Vector(&self.0 - &rhs.0)
+    }
+}
+
+// &Vector + Vector
+impl<T: MatrixElement> Add<Vector<T>> for &Vector<T> {
+    type Output = Vector<T>;
+
+    fn add(self, rhs: Vector<T>) -> Self::Output {
+        assert_eq!(
+            self.num_rows, rhs.num_rows,
+            "Vectors must have the same length for addition."
+        );
+        Vector(&self.0 + rhs.0)
+    }
+}
+
+// &Vector - Vector
+impl<T: MatrixElement> Sub<Vector<T>> for &Vector<T> {
+    type Output = Vector<T>;
+
+    fn sub(self, rhs: Vector<T>) -> Self::Output {
+        assert_eq!(
+            self.num_rows, rhs.num_rows,
+            "Vectors must have the same length for subtraction."
+        );
+        Vector(&self.0 - rhs.0)
     }
 }
 

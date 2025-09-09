@@ -367,6 +367,110 @@ where
     }
 }
 
+// &Matrix + &Matrix
+impl<T> Add<&Matrix<T>> for &Matrix<T>
+where
+    T: MatrixElement,
+{
+    type Output = Matrix<T>;
+
+    fn add(self, rhs: &Matrix<T>) -> Self::Output {
+        assert!(
+            self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols,
+            "Matrices have different number of shape. LHS Matrix = {:?}, RHS matrix = {:?}.",
+            self,
+            rhs
+        );
+
+        let mut result = Matrix::<T>::zero(self.num_rows, self.num_cols);
+
+        for i in 0..self.num_rows {
+            for j in 0..self.num_cols {
+                result.mat[i][j] = self.mat[i][j] + rhs.mat[i][j];
+            }
+        }
+        result
+    }
+}
+
+// &Matrix - &Matrix
+impl<T> Sub<&Matrix<T>> for &Matrix<T>
+where
+    T: MatrixElement,
+{
+    type Output = Matrix<T>;
+
+    fn sub(self, rhs: &Matrix<T>) -> Self::Output {
+        assert!(
+            self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols,
+            "Matrices have different number of shape. LHS Matrix = {:?}, RHS matrix = {:?}.",
+            self,
+            rhs
+        );
+
+        let mut result = Matrix::<T>::zero(self.num_rows, self.num_cols);
+
+        for i in 0..self.num_rows {
+            for j in 0..self.num_cols {
+                result.mat[i][j] = self.mat[i][j] - rhs.mat[i][j];
+            }
+        }
+        result
+    }
+}
+
+// &Matrix + Matrix
+impl<T> Add<Matrix<T>> for &Matrix<T>
+where
+    T: MatrixElement,
+{
+    type Output = Matrix<T>;
+
+    fn add(self, rhs: Matrix<T>) -> Self::Output {
+        assert!(
+            self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols,
+            "Matrices have different number of shape. LHS Matrix = {:?}, RHS matrix = {:?}.",
+            self,
+            rhs
+        );
+
+        let mut result = Matrix::<T>::zero(self.num_rows, self.num_cols);
+
+        for i in 0..self.num_rows {
+            for j in 0..self.num_cols {
+                result.mat[i][j] = self.mat[i][j] + rhs.mat[i][j];
+            }
+        }
+        result
+    }
+}
+
+// &Matrix - Matrix
+impl<T> Sub<Matrix<T>> for &Matrix<T>
+where
+    T: MatrixElement,
+{
+    type Output = Matrix<T>;
+
+    fn sub(self, rhs: Matrix<T>) -> Self::Output {
+        assert!(
+            self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols,
+            "Matrices have different number of shape. LHS Matrix = {:?}, RHS matrix = {:?}.",
+            self,
+            rhs
+        );
+
+        let mut result = Matrix::<T>::zero(self.num_rows, self.num_cols);
+
+        for i in 0..self.num_rows {
+            for j in 0..self.num_cols {
+                result.mat[i][j] = self.mat[i][j] - rhs.mat[i][j];
+            }
+        }
+        result
+    }
+}
+
 // Matrix * Matrix
 impl<T> Mul for Matrix<T>
 where
@@ -388,6 +492,62 @@ where
             for j in 0..rhs.num_cols {
                 for k in 0..self.num_cols {
                     result.mat[i][j] += self.mat[i][k].clone() * rhs.mat[k][j].clone();
+                }
+            }
+        }
+        result
+    }
+}
+
+// &Matrix * &Matrix
+impl<T> Mul<&Matrix<T>> for &Matrix<T>
+where
+    T: MatrixElement,
+{
+    type Output = Matrix<T>;
+
+    fn mul(self, rhs: &Matrix<T>) -> Self::Output {
+        assert!(
+            self.num_cols == rhs.num_rows,
+            "Number of columns in LHS Matrix is different from number of rows in RHS Matrix. LHS Matrix = {:?}, RHS matrix = {:?}.",
+            self,
+            rhs
+        );
+
+        let mut result = Matrix::<T>::zero(self.num_rows, rhs.num_cols);
+
+        for i in 0..self.num_rows {
+            for j in 0..rhs.num_cols {
+                for k in 0..self.num_cols {
+                    result.mat[i][j] += self.mat[i][k] * rhs.mat[k][j];
+                }
+            }
+        }
+        result
+    }
+}
+
+// Matrix * &Matrix
+impl<T> Mul<&Matrix<T>> for Matrix<T>
+where
+    T: MatrixElement,
+{
+    type Output = Matrix<T>;
+
+    fn mul(self, rhs: &Matrix<T>) -> Self::Output {
+        assert!(
+            self.num_cols == rhs.num_rows,
+            "Number of columns in LHS Matrix is different from number of rows in RHS Matrix. LHS Matrix = {:?}, RHS matrix = {:?}.",
+            self,
+            rhs
+        );
+
+        let mut result = Matrix::<T>::zero(self.num_rows, rhs.num_cols);
+
+        for i in 0..self.num_rows {
+            for j in 0..rhs.num_cols {
+                for k in 0..self.num_cols {
+                    result.mat[i][j] += self.mat[i][k] * rhs.mat[k][j];
                 }
             }
         }
