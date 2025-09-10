@@ -611,6 +611,20 @@ impl Zero for f64 {
     }
 }
 
+impl MatrixElement for i64 {}
+
+impl Identity for i64 {
+    fn identity() -> Self {
+        1_i64
+    }
+}
+
+impl Zero for i64 {
+    fn zero() -> Self {
+        0_i64
+    }
+}
+
 // f64 * Matrix -- because generic implementation is not possible.
 impl Mul<Matrix<f64>> for f64 {
     type Output = Matrix<f64>;
